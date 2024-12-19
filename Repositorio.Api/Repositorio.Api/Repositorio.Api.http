@@ -1,0 +1,19 @@
+@Repositorio.Api_HostAddress = http://localhost:5256
+
+GET {{Repositorio.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+GET {{Repositorio.Api_HostAddress}}/Repositorio
+Accept: application/json
+###
+
+GET {{Repositorio.Api_HostAddress}}/Repositorio
+Accept: application/json
+###
+POST {{Repositorio.Api_HostAddress}}/Repositorio
+Accept: application/json
+###
+PUT {{Repositorio.Api_HostAddress}}/Repositorio
+Accept: application/json
+###
