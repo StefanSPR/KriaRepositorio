@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Repositorio.Shared;
 using Repositorio.Aplicacao.Dto.Update;
+using Repositorio.Aplicacao.Interface;
+using Repositorio.Aplicacao;
 
 namespace Repositorio.Teste.Controller
 {
@@ -21,6 +23,7 @@ namespace Repositorio.Teste.Controller
     public class RepositorioControllerTests
     {
         private readonly Mock<ILogger<RepositorioController>> _mockLogger;
+        private readonly IRepositorioApp _repositorioApp;
         private readonly IMapper _mapper;
         private readonly DbContextOptions<Contexto> _dbContextOptions;
         private readonly Contexto _contexto;
@@ -39,7 +42,7 @@ namespace Repositorio.Teste.Controller
                 cfg.CreateMap<CrtRepositorio, MdlRepositorio>()
                     .ForMember(dest => dest.DataAtualizacao, opt => opt.MapFrom(src => DateTime.Now));
                 cfg.CreateMap<UpdRepositorio, MdlRepositorio>()
-                    .ForMember(dest => dest.DataAtualizacao, opt => opt.MapFrom(src => DateTime.Now)); 
+                    .ForMember(dest => dest.DataAtualizacao, opt => opt.MapFrom(src => DateTime.Now));
                 cfg.CreateMap<MdlRepositorio, RtnRepositorio>()
                     .ForMember(dest => dest.DonoRepositorio, opt => opt.MapFrom(src => (src.Usuario ?? new()).Nome));
                 cfg.CreateMap<MdlUsuario, RtnUsuario>();
@@ -47,7 +50,8 @@ namespace Repositorio.Teste.Controller
             _mapper = config.CreateMapper();
 
             _contexto = new Contexto(_dbContextOptions);
-            _controller = new RepositorioController(_mockLogger.Object, _contexto, _mapper);
+            _repositorioApp = new RepositorioApp(_contexto, _mapper);
+            _controller = new RepositorioController(_mockLogger.Object, _repositorioApp);
         }
         #region GET
 
@@ -56,7 +60,7 @@ namespace Repositorio.Teste.Controller
         {
             // Arrange
             // Act
-            var result = _controller.Get(99);
+            var result = _controller.Get(999);
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
@@ -157,7 +161,7 @@ namespace Repositorio.Teste.Controller
 
             // Assert
             Assert.NotNull(repositorios);
-            Assert.Single(repositorios); 
+            Assert.Single(repositorios);
             Assert.Equal("SocialNetwork", repositorios[0].Nome);
         }
 

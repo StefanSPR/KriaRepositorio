@@ -1,11 +1,7 @@
-﻿
-using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
 using Repositorio.Aplicacao.Dto.Create;
 using Repositorio.Aplicacao.Dto.Return;
-using Repositorio.Dominio;
-using Repositorio.Infra;
+using Repositorio.Aplicacao.Interface;
 
 namespace Repositorio.Api.Controllers
 {
@@ -16,14 +12,12 @@ namespace Repositorio.Api.Controllers
     {
 
         private readonly ILogger<RepositorioController> _logger;
-        private readonly Contexto _contexto;
-        private IMapper _mapper;
+        private readonly IRepositorioApp _repositorioApp;
 
-        public RepositorioController(ILogger<RepositorioController> logger, Contexto contexto, IMapper mapper)
+        public RepositorioController(ILogger<RepositorioController> logger, IRepositorioApp repositorioApp)
         {
             _logger = logger;
-            _contexto = contexto;
-            _mapper = mapper;
+            _repositorioApp = repositorioApp;
         }
         [HttpGet]
         public IActionResult Get()
@@ -31,11 +25,8 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método GET para listar repositórios.");
             try
             {
-                var repositorios = _contexto.Repositorios
-                    .Include(x => x.Usuario)
-                    .OrderBy(x => x.Id)
-                    .ToList();
-                return Ok(_mapper.Map<List<RtnRepositorio>>(repositorios));
+                List<RtnRepositorio> ret = _repositorioApp.ListarTodos();
+                return Ok(ret);
             }
             catch (Exception ex)
             {
@@ -50,17 +41,15 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método GET para buscar repositório com ID {Id}.", id);
             try
             {
-                var repositorio = _contexto.Repositorios
-                    .Include(x => x.Usuario)
-                    .FirstOrDefault(x => x.Id == id);
+                RtnRepositorio ret = _repositorioApp.ObterPorId(id);
 
-                if (repositorio == null)
+                if (ret == null)
                 {
                     _logger.LogWarning("Repositório com ID {Id} não encontrado.", id);
                     return NotFound();
                 }
 
-                return Ok(_mapper.Map<RtnRepositorio>(repositorio));
+                return Ok(ret);
             }
             catch (Exception ex)
             {
@@ -75,10 +64,8 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método POST para criar um novo repositório.");
             try
             {
-                var repositorio = _mapper.Map<MdlRepositorio>(dto);
-                _contexto.Repositorios.Add(repositorio);
-                _contexto.SaveChanges();
-                return Created("", _mapper.Map<RtnRepositorio>(repositorio));
+                var ret = _repositorioApp.Salvar(dto);
+                return Created("", ret);
             }
             catch (Exception ex)
             {
@@ -93,15 +80,13 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método PUT para atualizar repositório com ID {Id}.", id);
             try
             {
-                var repositorio = _contexto.Repositorios.FirstOrDefault(x => x.Id == id);
-                if (repositorio == null)
+                RtnRepositorio? ret = _repositorioApp.Atuailizar(id, dto);
+                if (ret == null)
                 {
                     _logger.LogWarning("Repositório com ID {Id} não encontrado para atualização.", id);
                     return NotFound();
                 }
 
-                _mapper.Map(dto, repositorio);
-                _contexto.SaveChanges();
                 return NoContent();
             }
             catch (Exception ex)
@@ -117,15 +102,14 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método DELETE para remover repositório com ID {Id}.", id);
             try
             {
-                var repositorio = _contexto.Repositorios.FirstOrDefault(a => a.Id == id);
+
+                var repositorio = _repositorioApp.Apagar(id);
                 if (repositorio == null)
                 {
                     _logger.LogWarning("Repositório com ID {Id} não encontrado para exclusão.", id);
                     return NotFound();
                 }
 
-                _contexto.Repositorios.Remove(repositorio);
-                _contexto.SaveChanges();
                 return NoContent();
             }
             catch (Exception ex)
@@ -141,12 +125,10 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método GET para listar repositórios do usuário {UserName}.", userName);
             try
             {
-                var repositorios = _contexto.Repositorios
-                    .Include(x => x.Usuario)
-                    .Where(x => x.Usuario!.UserName.ToUpper() == userName.ToUpper())
-                    .ToList();
+                List<RtnRepositorio> ret = _repositorioApp.ListarPorUsername(userName);
 
-                return Ok(_mapper.Map<List<RtnRepositorio>>(repositorios));
+
+                return Ok(ret);
             }
             catch (Exception ex)
             {
@@ -166,13 +148,10 @@ namespace Repositorio.Api.Controllers
                     _logger.LogWarning("Nome não fornecido para busca.");
                     return BadRequest("Nome é obrigatório.");
                 }
+                List<RtnRepositorio> ret = _repositorioApp.ListarPorNome(nome);
 
-                var repositorios = _contexto.Repositorios
-                    .Include(x => x.Usuario)
-                    .Where(x => x.Usuario!.Nome.ToUpper().Contains(nome.ToUpper()) || x.Nome!.ToUpper().Contains(nome.ToUpper()))
-                    .ToList();
 
-                return Ok(_mapper.Map<List<RtnRepositorio>>(repositorios));
+                return Ok(ret);
             }
             catch (Exception ex)
             {
@@ -187,15 +166,13 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método PUT para favoritar repositório com ID {Id}.", id);
             try
             {
-                var repositorio = _contexto.Repositorios.Include(x => x.Usuario).FirstOrDefault(x => x.Id == id);
-                if (repositorio == null)
+                RtnRepositorio? ret = _repositorioApp.Favoritar(id);
+                if (ret == null)
                 {
                     _logger.LogWarning("Repositório com ID {Id} não encontrado para favoritar.", id);
                     return NotFound();
                 }
 
-                repositorio.Favorito = true;
-                _contexto.SaveChanges();
                 return NoContent();
             }
             catch (Exception ex)
@@ -211,12 +188,9 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método GET para listar repositórios favoritos do usuário {UserName}.", userName);
             try
             {
-                var repositorios = _contexto.Repositorios
-                    .Include(x => x.Usuario)
-                    .Where(x => x.Usuario!.UserName.ToUpper() == userName.ToUpper() && x.Favorito)
-                    .ToList();
+                List<RtnRepositorio> ret = _repositorioApp.ListarFavoritos(userName);
 
-                return Ok(_mapper.Map<List<RtnRepositorio>>(repositorios));
+                return Ok(ret);
             }
             catch (Exception ex)
             {

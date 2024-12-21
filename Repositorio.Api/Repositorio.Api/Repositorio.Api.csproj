@@ -16,8 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Repositorio.Aplicacao\Repositorio.Aplicacao.csproj" />
-    <ProjectReference Include="..\Repositorio.Dominio\Repositorio.Dominio.csproj" />
-    <ProjectReference Include="..\Repositorio.Infra\Repositorio.Infra.csproj" />
     <ProjectReference Include="..\Repositorio.Shared\Repositorio.Shared.csproj" />
   </ItemGroup>
 
