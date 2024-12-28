@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Repositorio.Aplicacao.Dto.Create;
 using Repositorio.Aplicacao.Dto.Return;
+using Repositorio.Aplicacao.Dto.Update;
 using Repositorio.Aplicacao.Interface;
+using System.Data.Entity.Core;
 
 namespace Repositorio.Api.Controllers
 {
@@ -64,7 +66,7 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método POST para criar um novo repositório.");
             try
             {
-                var ret = _repositorioApp.Salvar(dto);
+                var ret = _repositorioApp.Inserir(dto);
                 return Created("", ret);
             }
             catch (Exception ex)
@@ -75,12 +77,12 @@ namespace Repositorio.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody] CrtRepositorio dto)
+        public IActionResult Put(int id, [FromBody] UpdRepositorio dto)
         {
             _logger.LogInformation("Executando método PUT para atualizar repositório com ID {Id}.", id);
             try
             {
-                RtnRepositorio? ret = _repositorioApp.Atuailizar(id, dto);
+                RtnRepositorio? ret = _repositorioApp.Atualizar(id, dto);
                 if (ret == null)
                 {
                     _logger.LogWarning("Repositório com ID {Id} não encontrado para atualização.", id);
@@ -88,6 +90,11 @@ namespace Repositorio.Api.Controllers
                 }
 
                 return NoContent();
+            }
+            catch (ObjectNotFoundException)
+            {
+                _logger.LogWarning("Repositório com ID {Id} não encontrado para atualização.", id);                
+                return NotFound();
             }
             catch (Exception ex)
             {
@@ -102,15 +109,13 @@ namespace Repositorio.Api.Controllers
             _logger.LogInformation("Executando método DELETE para remover repositório com ID {Id}.", id);
             try
             {
-
-                var repositorio = _repositorioApp.Apagar(id);
-                if (repositorio == null)
-                {
-                    _logger.LogWarning("Repositório com ID {Id} não encontrado para exclusão.", id);
-                    return NotFound();
-                }
-
+                _repositorioApp.Apagar(id);
                 return NoContent();
+            }
+            catch(ObjectNotFoundException)
+            {
+                _logger.LogWarning("Repositório com ID {Id} não encontrado para exclusão.", id);
+                return NotFound();
             }
             catch (Exception ex)
             {

@@ -233,7 +233,7 @@ namespace Repositorio.Teste.Controller
         {
             // Arrange
             var id = 1;
-            var dto = new CrtRepositorio
+            var dto = new UpdRepositorio
             {
                 Nome = "Projeto Atualizado",
                 Descricao = "Descrição Atualizada",
@@ -256,7 +256,7 @@ namespace Repositorio.Teste.Controller
         {
             // Arrange
             var id = 999; // ID inexistente
-            var dto = new CrtRepositorio
+            var dto = new UpdRepositorio
             {
                 Nome = "Projeto Inexistente"
             };
