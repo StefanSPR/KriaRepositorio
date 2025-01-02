@@ -59,10 +59,7 @@ namespace Repositorio.Aplicacao.SuperClass
             DbSet<TContext> dbSet = _contexto.Set<TContext>();
             if(includes is not null && includes.Any())
             {
-                foreach (var include in includes.ToList())
-                {
-                    dbQuery = dbSet.Include(include);
-                }
+                dbQuery = includes.Aggregate(dbQuery, (current, include) => current.Include(include));                
             }
             return _mapper.Map<IList<TReturn>>(dbQuery.Where(func).ToList());
         }
